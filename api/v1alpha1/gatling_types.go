@@ -96,6 +96,24 @@ type TestScenarioSpec struct {
 	// +kubebuilder:validation:Optional
 	StartTime string `json:"startTime,omitempty"`
 
+	// (Optional) Test Time Zone.
+	// +kubebuilder:validation:Optional
+	TimeZone string `json:"timeZone,omitempty"`
+
+	// (Optional) Gatling Simulation file to use for load
+	// +kubebuilder:validation:Optional
+	ResourceFileName string `json:"resourceFileName,omitempty"`
+
+	// (Optional) Use Gradle.
+	// +kubebuilder:validation:Optional
+	UseGradle bool `json:"useGradle,omitempty"`
+
+	// (Optional) Environment type. Defaults to 'test'
+	// +kubebuilder:default=test
+	// +kubebuilder:validation:Enum=default;test;stage;prod;prod-dr
+	// +kubebuilder:validation:Optional
+	Environment string `json:"environment,omitempty"`
+
 	// (Optional) Number of pods running at the same time. Defaults to `1` (Minimum `1`)
 	// +kubebuilder:default=1
 	// +kubebuilder:validation:Minimum=1
@@ -260,4 +278,16 @@ type GatlingList struct {
 
 func init() {
 	SchemeBuilder.Register(&Gatling{}, &GatlingList{})
+}
+
+type GatlingRunnerConfig struct {
+	SimulationsDirectoryPath     string
+	TempSimulationsDirectoryPath string
+	ResourceFileName             string
+	ResultsDirectoryPath         string
+	StartTime                    string
+	TimeZone                     string
+	Environment                  string
+	SimulationClass              string
+	GenerateLocalReport          bool
 }

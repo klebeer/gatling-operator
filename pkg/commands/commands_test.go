@@ -36,6 +36,7 @@ var _ = Describe("GetGatlingRunnerCommand", func() {
 		resourcesDirectoryPath       string
 		resultsDirectoryPath         string
 		startTime                    string
+		timeZone                     string
 		simulationClass              string
 		generateLocalReport          bool
 		expectedValue                string
@@ -47,6 +48,7 @@ var _ = Describe("GetGatlingRunnerCommand", func() {
 		resourcesDirectoryPath = "testResourcesDirectoryPath"
 		resultsDirectoryPath = "testResultsDirectoryPath"
 		startTime = "2021-09-10 08:45:31"
+		timeZone = "America/Guayaquil"
 		simulationClass = "testSimulationClass"
 	})
 
@@ -91,7 +93,7 @@ if [ $? -ne 0 ]; then
 fi
 touch ${RUN_STATUS_FILE}
 `
-		Expect(GetGatlingRunnerCommand(simulationsDirectoryPath, tempSimulationsDirectoryPath, resourcesDirectoryPath, resultsDirectoryPath, startTime, simulationClass, generateLocalReport)).To(Equal(expectedValue))
+		Expect(GetGatlingRunnerCommand(simulationsDirectoryPath, tempSimulationsDirectoryPath, resourcesDirectoryPath, resultsDirectoryPath, startTime, timeZone, simulationClass, generateLocalReport)).To(Equal(expectedValue))
 	})
 
 	It("GetCommandWithoutLocalReport", func() {
@@ -135,7 +137,7 @@ if [ $? -ne 0 ]; then
 fi
 touch ${RUN_STATUS_FILE}
 `
-		Expect(GetGatlingRunnerCommand(simulationsDirectoryPath, tempSimulationsDirectoryPath, resourcesDirectoryPath, resultsDirectoryPath, startTime, simulationClass, generateLocalReport)).To(Equal(expectedValue))
+		Expect(GetGatlingRunnerCommand(simulationsDirectoryPath, tempSimulationsDirectoryPath, resourcesDirectoryPath, resultsDirectoryPath, startTime, timeZone, simulationClass, generateLocalReport)).To(Equal(expectedValue))
 	})
 })
 

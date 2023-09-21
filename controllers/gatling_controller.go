@@ -435,14 +435,39 @@ func (r *GatlingReconciler) newGatlingRunnerJobForCR(gatling *gatlingv1alpha1.Ga
 		gatling.Name,
 	)
 
-	gatlingRunnerCommand := commands.GetGatlingRunnerCommand(
-		r.getSimulationsDirectoryPath(gatling),
-		r.getTempSimulationsDirectoryPath(gatling),
-		r.getResourcesDirectoryPath(gatling),
-		r.getResultsDirectoryPath(gatling),
-		r.getGatlingRunnerJobStartTime(gatling),
-		gatling.Spec.TestScenarioSpec.SimulationClass,
-		r.getGenerateLocalReport(gatling))
+	var useGradle = r.getGatlingRunnerJobUseGradle(gatling)
+	log.Info("useGradle:", "useGradle", useGradle)
+	var gatlingRunnerCommand string
+
+	config := gatlingv1alpha1.GatlingRunnerConfig{
+		SimulationsDirectoryPath:     r.getSimulationsDirectoryPath(gatling),
+		TempSimulationsDirectoryPath: r.getTempSimulationsDirectoryPath(gatling),
+		ResourceFileName:             r.getResourceFileName(gatling),
+		ResultsDirectoryPath:         r.getResultsDirectoryPath(gatling),
+		StartTime:                    r.getGatlingRunnerJobStartTime(gatling),
+		TimeZone:                     r.getGatlingRunnerJobTimeZone(gatling),
+		Environment:                  r.getGatlingRunnerEnv(gatling),
+		SimulationClass:              gatling.Spec.TestScenarioSpec.SimulationClass,
+		GenerateLocalReport:          r.getGenerateLocalReport(gatling),
+	}
+
+	if useGradle {
+		log.Info("USing GetGradleGatlingRunnerCommand")
+		gatlingRunnerCommand = commands.GetGradleGatlingRunnerCommand(config)
+	} else {
+		log.Info("USing GetGatlingRunnerCommand")
+		gatlingRunnerCommand = commands.GetGatlingRunnerCommand(
+			r.getSimulationsDirectoryPath(gatling),
+			r.getTempSimulationsDirectoryPath(gatling),
+			r.getResourcesDirectoryPath(gatling),
+			r.getResultsDirectoryPath(gatling),
+			r.getGatlingRunnerJobStartTime(gatling),
+			r.getGatlingRunnerJobTimeZone(gatling),
+			gatling.Spec.TestScenarioSpec.SimulationClass,
+			r.getGenerateLocalReport(gatling),
+		)
+	}
+
 	log.Info("gatlingRunnerCommand:", "comand", gatlingRunnerCommand)
 
 	var noRestarts int32 = 0
@@ -456,6 +481,7 @@ func (r *GatlingReconciler) newGatlingRunnerJobForCR(gatling *gatlingv1alpha1.Ga
 			storagePath)
 		log.Info("gatlingTransferResultCommand:", "command", gatlingTransferResultCommand)
 		cloudStorageEnvVars := gatling.Spec.CloudStorageSpec.Env
+
 		return &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      gatling.Name + "-runner",
@@ -464,8 +490,8 @@ func (r *GatlingReconciler) newGatlingRunnerJobForCR(gatling *gatlingv1alpha1.Ga
 			},
 			Spec: batchv1.JobSpec{
 				BackoffLimit: &noRestarts,
-				Parallelism: r.getGatlingRunnerJobParallelism(gatling),
-				Completions: r.getGatlingRunnerJobParallelism(gatling),
+				Parallelism:  r.getGatlingRunnerJobParallelism(gatling),
+				Completions:  r.getGatlingRunnerJobParallelism(gatling),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:        r.getObjectMeta(gatling).Name,
@@ -531,8 +557,8 @@ func (r *GatlingReconciler) newGatlingRunnerJobForCR(gatling *gatlingv1alpha1.Ga
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit: &noRestarts,
-			Parallelism: &gatling.Spec.TestScenarioSpec.Parallelism,
-			Completions: &gatling.Spec.TestScenarioSpec.Parallelism,
+			Parallelism:  &gatling.Spec.TestScenarioSpec.Parallelism,
+			Completions:  &gatling.Spec.TestScenarioSpec.Parallelism,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        r.getObjectMeta(gatling).Name,
@@ -914,6 +940,38 @@ func (r *GatlingReconciler) getGatlingRunnerJobStartTime(gatling *gatlingv1alpha
 		startTime = gatling.Spec.TestScenarioSpec.StartTime
 	}
 	return startTime
+}
+
+func (r *GatlingReconciler) getGatlingRunnerJobTimeZone(gatling *gatlingv1alpha1.Gatling) string {
+	var timeZone string
+	if &gatling.Spec.TestScenarioSpec != nil && gatling.Spec.TestScenarioSpec.TimeZone != "" {
+		timeZone = gatling.Spec.TestScenarioSpec.TimeZone
+	}
+	return timeZone
+}
+
+func (r *GatlingReconciler) getGatlingRunnerEnv(gatling *gatlingv1alpha1.Gatling) string {
+	var environment string
+	if &gatling.Spec.TestScenarioSpec != nil && gatling.Spec.TestScenarioSpec.Environment != "" {
+		environment = gatling.Spec.TestScenarioSpec.Environment
+	}
+	return environment
+}
+
+func (r *GatlingReconciler) getResourceFileName(gatling *gatlingv1alpha1.Gatling) string {
+	var resourceFileName string
+	if &gatling.Spec.TestScenarioSpec != nil && gatling.Spec.TestScenarioSpec.ResourceFileName != "" {
+		resourceFileName = gatling.Spec.TestScenarioSpec.ResourceFileName
+	}
+	return resourceFileName
+}
+
+func (r *GatlingReconciler) getGatlingRunnerJobUseGradle(gatling *gatlingv1alpha1.Gatling) bool {
+	var useGradle = false
+	if &gatling.Spec.TestScenarioSpec.UseGradle != nil {
+		useGradle = gatling.Spec.TestScenarioSpec.UseGradle
+	}
+	return useGradle
 }
 
 func (r *GatlingReconciler) getGatlingRunnerJobParallelism(gatling *gatlingv1alpha1.Gatling) *int32 {

@@ -49,6 +49,56 @@ done
 	return fmt.Sprintf(template, resultsDirectoryPath, storagePath)
 }
 
+func (p *GCPCloudStorageProvider) GetGatlingTransferAllResultCommand(resultsDirectoryPath string, region string, storagePath string) string {
+	template := `
+extract_base_url() {
+  local string="$1"
+  local protocol=$(echo "$string" | cut -d'/' -f 1)
+  local domain=$(echo "$string" | cut -d'/' -f 3)
+  local result="$protocol//$domain"
+  echo "$result"
+}
+
+RESULTS_DIR_PATH="%s"
+GCS_BUCKET_PATH="%s"
+
+GCS_BUCKET_PATH_BASE=$(extract_base_url "$GCS_BUCKET_PATH")
+echo "Copy Gatling results to GCS bucket"
+echo "RESULTS_DIR_PATH: ${RESULTS_DIR_PATH}"
+echo "GCS_BUCKET_PATH: ${GCS_BUCKET_PATH_BASE}"
+
+rclone config create gs "google cloud storage" bucket_policy_only true --non-interactive
+while true; do
+  FAILED_PATH=$(find ${RESULTS_DIR_PATH} -type f -name "FAILED")
+  COMPLETED_PATH=$(find ${RESULTS_DIR_PATH} -type f -name "COMPLETED")
+  ZIP_PATH=$(find ${RESULTS_DIR_PATH} -type f -name "*.zip")
+
+  if [ ! -z "${FAILED_PATH}" ]; then
+    echo "Found FAILED file. Stop waiting."
+    exit 1
+  fi
+
+ if [ ! -z "${COMPLETED_PATH}" ] && [ ! -z "${ZIP_PATH}" ]; then
+    echo "Found COMPLETED file. Proceeding to copy results."
+    START_TIME=$(date +%%s)
+    #rclone copy ${RESULTS_DIR_PATH} ${GCS_BUCKET_PATH_BASE} --exclude "**/**/COMPLETED" --exclude "**/**/FAILED"
+	
+    echo "El directorio COMPLETED_PATH: ${COMPLETED_PATH}"
+	echo "El zip es: ${ZIP_PATH}"
+
+    END_TIME=$(date +%%s)
+    TIME_TAKEN=$((END_TIME - START_TIME))
+    echo "Gatling results copied to GCS bucket in ${TIME_TAKEN} seconds"
+    break
+  fi
+
+  sleep 1800
+done
+`
+
+	return fmt.Sprintf(template, resultsDirectoryPath, storagePath)
+}
+
 // param: region is not used in GCP GCS, thus set just dummy value
 func (p *GCPCloudStorageProvider) GetGatlingAggregateResultCommand(resultsDirectoryPath string, region string, storagePath string) string {
 	template := `

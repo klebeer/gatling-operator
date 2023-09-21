@@ -61,6 +61,10 @@ done
 	return fmt.Sprintf(template, resultsDirectoryPath, storagePath)
 }
 
+func (p *AzureCloudStorageProvider) GetGatlingTransferAllResultCommand(resultsDirectoryPath string, region string, storagePath string) string {
+	return p.GetGatlingAggregateResultCommand(resultsDirectoryPath, region, storagePath)
+}
+
 func (p *AzureCloudStorageProvider) GetGatlingAggregateResultCommand(resultsDirectoryPath string, region string, storagePath string) string {
 	// region param isn't used
 	template := `

@@ -1,0 +1,87 @@
+plugins {
+    id 'java'
+    id 'io.gatling.gradle' version '3.9.5.5'
+}
+
+
+gatling {
+    jvmArgs = [
+            project.hasProperty('configResource') ? "-Dconfig.resource=${configResource}" : '',
+    ]
+}
+
+
+dependencies {
+
+    gatlingImplementation 'com.sumologic.api.client:sumo-java-client:2.10'
+    gatlingImplementation 'com.typesafe:config:1.4.1'
+    gatling 'org.projectlombok:lombok:1.18.28'
+    gatlingAnnotationProcessor 'org.projectlombok:lombok:1.18.28'
+
+    //to pre load the dependencies to cache
+    implementation 'org.projectlombok:lombok:1.18.28'
+    implementation 'io.gatling.highcharts:gatling-charts-highcharts:3.9.5'
+    implementation 'com.sumologic.api.client:sumo-java-client:2.10'
+    implementation 'com.typesafe:config:1.4.1'
+    implementation 'org.scala-lang:scala-library:2.13.11'
+
+}
+repositories {
+    mavenCentral()
+}
+
+tasks.register('moveGatlingReports', Copy) {
+    doLast {
+        def resultsFolder = project.hasProperty('resultsFolder') ? project.getProperty('resultsFolder') : '.'
+        println "Actually moving Gatling reports to: ${resultsFolder}"
+    }
+    from layout.buildDirectory.dir("reports/gatling")
+    into project.provider {
+        project.hasProperty('resultsFolder') ? project.getProperty('resultsFolder') : '.'
+    }
+}
+
+tasks.register('zipGatlingReports') {
+    doLast {
+        def buildDirPath = layout.buildDirectory.get().asFile.absolutePath
+        def gatlingDirPath = "$buildDirPath/reports/gatling"
+        def gatlingDir = new File(gatlingDirPath)
+        def resultsFolder = project.hasProperty('resultsFolder') ? project.getProperty('resultsFolder') : '.'
+
+        println "Checking gatling directory at: ${gatlingDir.absolutePath}"
+
+        if (gatlingDir.exists() && gatlingDir.isDirectory()) {
+            println "Found gatling directory."
+            gatlingDir.eachDir { File folder ->
+                println "Processing folder: ${folder.name}"
+
+                def zipFilePath = "${gatlingDir.absolutePath}/${folder.name}.zip"
+                def zipFile = new File(zipFilePath)
+
+                println "Creating zip file at: ${zipFile.absolutePath}"
+
+                zipFile.withOutputStream { outStream ->
+                    def zos = new java.util.zip.ZipOutputStream(outStream)
+                    folder.eachFileRecurse { file ->
+                        if (!file.isDirectory()) {
+                            def entry = new java.util.zip.ZipEntry(folder.toURI().relativize(file.toURI()).toString())
+                            zos.putNextEntry(entry)
+                            zos << file.bytes
+                            zos.closeEntry()
+                        }
+                    }
+                    zos.close()
+                }
+
+                // Move the zip file to the results folder
+                def targetLocation = new File("${resultsFolder}/${folder.name}.zip")
+                println "Moving zip file to: ${targetLocation.absolutePath}"
+                zipFile.renameTo(targetLocation)
+            }
+        } else {
+            println "Gatling directory not found."
+        }
+    }
+    dependsOn 'moveGatlingReports'
+}
+

@@ -1271,6 +1271,16 @@ spec:
                       - name
                       type: object
                     type: array
+                  environment:
+                    default: test
+                    description: (Optional) Environment type. Defaults to 'test'
+                    enum:
+                    - default
+                    - test
+                    - stage
+                    - prod
+                    - prod-dr
+                    type: string
                   gatlingConf:
                     additionalProperties:
                       type: string
@@ -1288,6 +1298,9 @@ spec:
                       type: string
                     description: (Optional) Resource Data.
                     type: object
+                  resourceFileName:
+                    description: (Optional) Gatling Simulation file to use for load
+                    type: string
                   resourcesDirectoryPath:
                     description: (Optional) Gatling Simulation directory path where
                       resources are stored. Defaults to `/opt/gatling/user-files/resources`
@@ -1311,6 +1324,12 @@ spec:
                   startTime:
                     description: (Optional) Test Start time.
                     type: string
+                  timeZone:
+                    description: (Optional) Test Time Zone.
+                    type: string
+                  useGradle:
+                    description: (Optional) Use Gradle.
+                    type: boolean
                 required:
                 - simulationClass
                 type: object

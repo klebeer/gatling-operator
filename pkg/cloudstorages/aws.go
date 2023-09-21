@@ -46,6 +46,9 @@ done
 	return fmt.Sprintf(template, resultsDirectoryPath, region, storagePath)
 }
 
+func (p *AWSCloudStorageProvider) GetGatlingTransferAllResultCommand(resultsDirectoryPath string, region string, storagePath string) string {
+	return p.GetGatlingAggregateResultCommand(resultsDirectoryPath, region, storagePath)
+}
 func (p *AWSCloudStorageProvider) GetGatlingAggregateResultCommand(resultsDirectoryPath string, region string, storagePath string) string {
 	template := `
 GATLING_AGGREGATE_DIR=%s

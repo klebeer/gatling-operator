@@ -14,6 +14,8 @@ type CloudStorageProvider interface {
 	GetCloudStoragePath(bucket string, gatlingName string, subDir string) string
 	GetCloudStorageReportURL(bucket string, gatlingName string, subDir string) string
 	GetGatlingTransferResultCommand(resultsDirectoryPath string, region string, storagePath string) string
+
+	GetGatlingTransferAllResultCommand(resultsDirectoryPath string, region string, storagePath string) string
 	GetGatlingAggregateResultCommand(resultsDirectoryPath string, region string, storagePath string) string
 	GetGatlingTransferReportCommand(resultsDirectoryPath string, region string, storagePath string) string
 }
