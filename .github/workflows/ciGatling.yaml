@@ -1,0 +1,45 @@
+name: CI Gatling
+on:
+  push:
+    paths:
+      - 'gatling/Dockerfile'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'gatling/Dockerfile'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  release:
+    name: Build Push Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +%s)" >>$GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and push gatling image
+        run: |
+          IMAGE_ID=$REGISTRY/$IMAGE_NAME/gatling
+          TAG=${{ steps.date.outputs.date }}
+          docker build -t $IMAGE_ID:$TAG ./gatling
+          echo $IMAGE_ID:$TAG
+          docker push $IMAGE_ID:$TAG
+

@@ -1,0 +1,43 @@
+apiVersion: gatling-operator.tech.zozo.com/v1alpha1
+kind: Gatling
+metadata:
+  name: test-runner
+
+spec:
+  generateReport: true
+  generateLocalReport: false
+  cleanupAfterJobDone: false
+  podSpec:
+    serviceAccountName: "gatling-operator-worker"
+    gatlingImage: 192.168.49.1:5001/load-runner:v1.0.0
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "2048Mi"
+  cloudStorageSpec:
+    provider: "gcp"
+    bucket: "bcg-stb-apg-tt-gatling-tests-usc1-01"
+  testScenarioSpec:
+    #startTime: "2023-09-17 17:41:31"
+    timeZone: "America/Guayaquil"
+    useGradle: true
+    environment: "test"
+    parallelism: 1
+    simulationsDirectoryPath: "gatling-loadtesting-java"
+    resourceFileName: "recorder.conf"
+    simulationClass: "computerdatabase.ComputerDatabaseSimulation"
+    env:
+      - name: CONCURRENCY
+        value: "10"
+      - name: DURATION
+        value: "5"
+      - name: TARGET_RPS
+        value: "5"
+      - name: RAMP_USERS
+        value: "10"
+      - name: HOLD_PEAK
+        value: "2"
+      - name: MAX_TIME
+        value: "6"
+      - name: TARGET_HOSTNAME
+        value: "https://product-api.stage.gcp.bcinfra.net"

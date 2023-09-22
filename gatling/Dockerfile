@@ -35,9 +35,9 @@ WORKDIR  /opt/gatling
 VOLUME ["/opt/gatling/results"]
 
 # copy local files to gatling directory
-COPY . gatling-gradle/
+COPY gatling-gradle gatling-gradle/
 
-RUN cd /opt/gatling/gatling-loadtesting-java && gradle dependencies --refresh-dependencies && gradle gatlingClasses
+RUN cd /opt/gatling/gatling-gradle && gradle dependencies --refresh-dependencies && gradle gatlingClasses
 
 
 
